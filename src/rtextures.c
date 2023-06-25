@@ -287,7 +287,38 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
     return image;
 }
 
-// Load animated image data
+// Load animated image data from memory
+//  - Image.data buffer includes all frames: [image#0][image#1][image#2][...]
+//  - Number of frames is returned through 'frames' parameter
+//  - All frames are returned in RGBA format
+//  - Frames delay data is discarded
+Image LoadImageAnimFromMemory(const unsigned char *fileData, unsigned int dataSize, int *frames)
+{
+    Image image = { 0 };
+
+#if defined(SUPPORT_FILEFORMAT_GIF)
+    if (fileData != NULL)
+    {
+        int frameCount = 0;
+        int comp = 0;
+        int *delays = NULL;
+        image.data = stbi_load_gif_from_memory(fileData, dataSize, &delays, &image.width, &image.height, &frameCount, &comp, 4);
+
+        image.mipmaps = 1;
+        image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+
+        RL_FREE(fileData);
+        RL_FREE(delays);        // NOTE: Frames delays are discarded
+        *frames = frameCount;
+    }
+#else
+    frameCount = 0;
+#endif
+
+    return image;
+}
+
+// Load animated image data from file
 //  - Image.data buffer includes all frames: [image#0][image#1][image#2][...]
 //  - Number of frames is returned through 'frames' parameter
 //  - All frames are returned in RGBA format
@@ -305,15 +336,7 @@ Image LoadImageAnim(const char *fileName, int *frames)
 
         if (fileData != NULL)
         {
-            int comp = 0;
-            int *delays = NULL;
-            image.data = stbi_load_gif_from_memory(fileData, dataSize, &delays, &image.width, &image.height, &frameCount, &comp, 4);
-
-            image.mipmaps = 1;
-            image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-
-            RL_FREE(fileData);
-            RL_FREE(delays);        // NOTE: Frames delays are discarded
+            image = LoadImageAnimFromMemory(fileData, dataSize, &frameCount);
         }
     }
 #else
