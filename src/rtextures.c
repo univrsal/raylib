@@ -307,7 +307,6 @@ Image LoadImageAnimFromMemory(const unsigned char *fileData, unsigned int dataSi
         image.mipmaps = 1;
         image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
-        RL_FREE(fileData);
         RL_FREE(delays);        // NOTE: Frames delays are discarded
         *frames = frameCount;
     }
